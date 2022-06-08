@@ -11,12 +11,15 @@ import net.dirtydeeds.discordsoundboard.service.SoundService;
 import net.dirtydeeds.discordsoundboard.service.UserService;
 import net.dirtydeeds.discordsoundboard.util.ShutdownManager;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
+import net.dv8tion.jda.internal.utils.PermissionUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -46,23 +49,25 @@ public class SoundPlayer {
     private final SoundService soundService;
     private final UserService userService;
     private final MainWatch mainWatch;
-    private final ServletWebServerApplicationContext webServerApplicationContext;
+    @SuppressWarnings("unused")
+    @Autowired
+    private ServletWebServerApplicationContext webServerAppCtxt;
     private final ShutdownManager shutdownManager;
     private final BotConfig botConfig;
     private JDA bot;
     private JDABot jdaBot;
 
+    private Date lastReload;
+
     @Inject
     public SoundPlayer(MainWatch mainWatch, SoundService soundService,
-                       UserService userService, ShutdownManager shutdownManager, BotConfig botConfig,
-                       ServletWebServerApplicationContext webServerApplicationContext) {
+                       UserService userService, ShutdownManager shutdownManager, BotConfig botConfig) {
         this.mainWatch = mainWatch;
         this.mainWatch.setSoundPlayer(this);
         this.soundService = soundService;
         this.userService = userService;
         this.shutdownManager = shutdownManager;
         this.botConfig = botConfig;
-        this.webServerApplicationContext = webServerApplicationContext;
 
         init();
     }
@@ -76,7 +81,7 @@ public class SoundPlayer {
         }
 
         updateFileList();
-        updateUsersInDb();
+        getUsers();
 
         CommandListener commandListener = new CommandListener(botConfig);
         commandListener.addCommand(new DisconnectCommand(this));
@@ -85,7 +90,6 @@ public class SoundPlayer {
         commandListener.addCommand(new InfoCommand(this, botConfig));
         commandListener.addCommand(new LeaveCommand(this, userService, soundService));
         commandListener.addCommand(new ListCommand(this, botConfig));
-        commandListener.addCommand(new PingCommand());
         commandListener.addCommand(new PlayCommand(this));
         commandListener.addCommand(new RandomCommand(this));
         commandListener.addCommand(new ReloadCommand(this));
@@ -110,7 +114,7 @@ public class SoundPlayer {
     }
 
     public ServletWebServerApplicationContext getApplicationContext() {
-        return webServerApplicationContext;
+        return webServerAppCtxt;
     }
 
     /**
@@ -124,6 +128,10 @@ public class SoundPlayer {
             returnFiles.put(soundFile.getSoundFileId(), soundFile);
         }
         return returnFiles;
+    }
+
+    public long getLastReloadTimestamp(){
+        return lastReload.getTime()/1000L;
     }
 
     /**
@@ -215,6 +223,28 @@ public class SoundPlayer {
         }
     }
 
+
+    /**
+     * @param URL
+     * @param voiceChannelId - The ID of the voice channel to play music in
+     */
+    public void playUrlGUI(String URL, Integer repeatTimes, String voiceChannelId) {
+        try {
+            Guild guild = getGuildForUserOrChannelId("", voiceChannelId);
+            joinUsersCurrentChannel("", voiceChannelId);
+
+            playFile(URL, guild, repeatTimes);
+
+            if (botConfig.isLeaveAfterPlayback()) {
+                disconnectFromChannel(guild);
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+
+
     /**
      * Plays the fileName requested in the requested channel.
      *
@@ -230,6 +260,11 @@ public class SoundPlayer {
         if (botConfig.isLeaveAfterPlayback()) {
             disconnectFromChannel(channel.getGuild());
         }
+    }
+
+    public void playFileInChannel(String fileName, String channelId) {
+       VoiceChannel channel = bot.getVoiceChannelById(channelId);
+       playFileInChannel(fileName,channel);
     }
 
     /**
@@ -285,10 +320,15 @@ public class SoundPlayer {
      * @return boolean representing whether playback was stopped.
      */
     public boolean stop(String user, String voiceChannelId) {
+        LOG.info("STOPPING PLAYBACK FOR: User:" + user + "or Channel" + voiceChannelId);
         Guild guild = getGuildForUserOrChannelId(user, voiceChannelId);
+        LOG.info("STOPPING FOR GUILD: " + guild.toString());
         if (guild != null) {
+            LOG.info("STOPPING GUILD IS NOT NULL");
             AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
+            LOG.info("STOPPING HANDLER " + handler.toString());
             if (handler != null) {
+                LOG.info("STOPPING HANDLER " + handler.getPlayer().toString());
                 handler.getPlayer().stopTrack();
                 return true;
             }
@@ -300,8 +340,9 @@ public class SoundPlayer {
     /**
      * Get a list of users
      *
+     * @return List of soundboard users.
      */
-    public void updateUsersInDb() {
+    public List<net.dirtydeeds.discordsoundboard.beans.User> getUsers() {
         String userNameToSelect = botConfig.getBotOwnerName();
         List<User> users = new ArrayList<>();
         for (net.dv8tion.jda.api.entities.User discordUser : bot.getUsers()) {
@@ -321,6 +362,7 @@ public class SoundPlayer {
         }
         users.sort(Comparator.comparing(User::getUsername));
         userService.saveAll(users);
+        return users;
     }
 
     public net.dv8tion.jda.api.entities.User retrieveUserById(String id) {
@@ -367,7 +409,10 @@ public class SoundPlayer {
                 }
             }
 
-            List<SoundFile> soundFilesFromPath = new ArrayList<>();
+
+
+            soundService.findAll(Pageable.unpaged()).forEach(soundService::delete);
+
             Files.walk(soundFilePath).forEach(filePath -> {
                 if (Files.isRegularFile(filePath)) {
                     String fileName = filePath.getFileName().toString();
@@ -375,32 +420,19 @@ public class SoundPlayer {
                     int fileExtensionPeriodIndex = fileName.lastIndexOf(".");
                     if (fileExtensionPeriodIndex > 0) {
                         fileName = fileName.substring(0, fileExtensionPeriodIndex);
-                        LOG.info(fileName);
+                        //LOG.info(fileName);
                         File file = filePath.toFile();
                         String parent = file.getParentFile().getName();
 
-                        SoundFile soundFile = soundService.findOneBySoundFileIdIgnoreCase(fileName);
-                        if (soundFile == null) {
-                            soundFile = new SoundFile(fileName, filePath.toString(), parent, 0, ZonedDateTime.now());
-                            soundFilesFromPath.add(soundFile);
-                        } else {
-                            soundFile = soundService.initializeDateAdded(soundFile);
-                        }
-                        soundFile = soundService.save(soundFile);
-                        soundFilesFromPath.add(soundFile);
+
+                        SoundFile soundFile = new SoundFile(fileName, filePath.toString(), parent, 0, ZonedDateTime.now());
+                        soundService.save(soundFile);
                     }
                 }
             });
 
-            Iterable<SoundFile> soundFilesFromDB = soundService.findAll(Pageable.unpaged());
 
-            List<SoundFile> difference = StreamSupport
-                    .stream(soundFilesFromDB.spliterator(), false)
-                    .filter(s -> soundFilesFromPath.stream()
-                                .noneMatch(path -> path.getSoundFileId().equals(s.getSoundFileId())))
-                    .collect(Collectors.toList());
-
-            difference.forEach(soundService::delete);
+            lastReload = new Date();
         } catch (IOException e) {
             LOG.error(e.toString());
             e.printStackTrace();
@@ -415,8 +447,7 @@ public class SoundPlayer {
      * @return The voice channel the user is connected to. If user is not connected to a voice channel will return null.
      */
     private Guild getGuildForUserOrChannelId(String userName, String voiceChannelId) {
-        if (!botConfig.isControlByChannel() || StringUtils.isBlank(voiceChannelId)
-                || voiceChannelId.equals("undefined")) {
+        if (StringUtils.isBlank(voiceChannelId) || voiceChannelId.equals("undefined")) {
             for (Guild guild : bot.getGuilds()) {
                 for (VoiceChannel channel : guild.getVoiceChannels()) {
                     for (Member user : channel.getMembers()) {
@@ -508,17 +539,17 @@ public class SoundPlayer {
      *
      * @param event - The event that triggered this search. This is used to get th events author.
      * @param guild - The guild (discord server) to look in for the author.
-     * @return The VoiceChannel if one is found. Otherwise, return null.
+     * @return The VoiceChannel if one is found. Otherwise return null.
      */
     private VoiceChannel findUsersChannel(MessageReceivedEvent event, Guild guild) {
         VoiceChannel channel = null;
 
-        outerLoop:
+        outerloop:
         for (VoiceChannel channel1 : guild.getVoiceChannels()) {
             for (Member user : channel1.getMembers()) {
                 if (user.getId().equals(event.getAuthor().getId())) {
                     channel = channel1;
-                    break outerLoop;
+                    break outerloop;
                 }
             }
         }
@@ -526,14 +557,34 @@ public class SoundPlayer {
         return channel;
     }
 
+    private List<VoiceChannel> getCurrentVoiceChannel(){
+        List<VoiceChannel> connectedChannel = new LinkedList<VoiceChannel>();
+        for (AudioManager audioManager : bot.getAudioManagers()){
+            connectedChannel.add(audioManager.getConnectedChannel());
+        }
+        return connectedChannel;
+    }
+
+    private boolean isAllowedToJoinChannel(VoiceChannel channel){
+        return PermissionUtil.checkPermission(channel,channel.getGuild().getSelfMember(), Permission.VOICE_CONNECT);
+    }
+
     public List<ChannelResponse> getVoiceChannels() {
+        List<VoiceChannel> connectedChannel = getCurrentVoiceChannel();
+
         return bot.getVoiceChannels().stream()
                 .map(v -> {
-                    boolean ownerInChannel = v.getMembers()
-                            .stream()
-                            .anyMatch(m -> Objects.equals(m.getEffectiveName(), botConfig.botOwnerName));
-                    return new ChannelResponse(v.getName(), v.getId(), v.getGuild().getName(),
-                            v.getGuild().getId(), ownerInChannel);
+                    boolean isCurrentChannel = false;
+                    for (VoiceChannel channel : connectedChannel){
+                        if (channel != null && channel.getId().equals(v.getId())){
+                            isCurrentChannel = true;
+                        }
+                    }
+                    if (isAllowedToJoinChannel(v)){
+                        return new ChannelResponse(v.getName(), v.getId(), v.getGuild().getName(),
+                                v.getGuild().getId(), isCurrentChannel);
+                    }
+                    return null;
                 }
         ).collect(Collectors.toList());
     }
@@ -543,6 +594,15 @@ public class SoundPlayer {
             guild.getAudioManager().closeAudioConnection();
             LOG.info("Disconnecting from channel.");
         }
+    }
+
+    public void disconnectFromAllChannels() {
+        for (Guild guild : bot.getGuilds()) {
+            if (guild != null) {
+                guild.getAudioManager().closeAudioConnection();
+            }
+        }
+        LOG.info("Disconnecting from all channels.");
     }
 
     @PreDestroy

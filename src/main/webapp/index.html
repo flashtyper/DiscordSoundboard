@@ -177,7 +177,7 @@
             // Play sound
             $.ajax({
                 method: "POST",
-                url: "/bot/playFile?soundFileId=" + this.id + "&username=" + $('#user').val()
+                url: "/bot/playFileInChannel?soundFileId=" + this.id + "&voiceChannelId=" + $('#user').val()
             });
         }).on('click', '#random', function(){
             // Play random sound
@@ -246,30 +246,30 @@
         });
 
         // Get users
+        // $.ajax({
+        //     method: "GET",
+        //     url: "api/users/findAll"
+        // }).done(function( data ) {
+        //     var users = data.content;
+        //     users.sort(function(a, b) {
+        //         var textA = a.username.toUpperCase();
+        //         var textB = b.username.toUpperCase();
+        //         return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+        //     });
+        //     $.each(users, function(i, obj){
+        //         $('#user').append('<option value="' + obj.id + '"' + ((obj.selected) ? 'selected' : '') + '>' + obj.username + '</option>');
+        //     });
+        // });
+
+        // Get channels
         $.ajax({
             method: "GET",
-            url: "api/users/findAll"
+            url: "/bot/channels"
         }).done(function( data ) {
-            var users = data.content;
-            users.sort(function(a, b) {
-                var textA = a.username.toUpperCase();
-                var textB = b.username.toUpperCase();
-                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-            });
-            $.each(users, function(i, obj){
-                $('#user').append('<option value="' + obj.id + '"' + ((obj.selected) ? 'selected' : '') + '>' + obj.username + '</option>');
+            $.each(data.sort(), function(i, obj){
+                $('#user').append('<option value="' + obj.id + '"' + ((obj.defaultChannel) ? 'selected' : '') + '>' + obj.name + '</option>');
             });
         });
-
-<!--        // Get channels-->
-<!--        $.ajax({-->
-<!--            method: "GET",-->
-<!--            url: "/bot/channels"-->
-<!--        }).done(function( data ) {-->
-<!--            $.each(data.sort(), function(i, obj){-->
-<!--                $('#channel').append('<option value="' + obj.id + '"' + ((obj.defaultChannel) ? 'selected' : '') + '>' + obj.name + '</option>');-->
-<!--            });-->
-<!--        });-->
 
         // Get categories
         $.ajax({

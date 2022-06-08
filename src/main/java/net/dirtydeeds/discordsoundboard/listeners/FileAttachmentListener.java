@@ -1,6 +1,7 @@
 package net.dirtydeeds.discordsoundboard.listeners;
 
 import net.dirtydeeds.discordsoundboard.BotConfig;
+import net.dirtydeeds.discordsoundboard.SoundPlayer;
 import net.dirtydeeds.discordsoundboard.util.BotUtils;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Message;

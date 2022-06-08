@@ -12,9 +12,10 @@ import java.time.ZonedDateTime;
  *
  * @author dfurrer.
  */
+@Data
 @Entity
-@Getter
 @Setter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor

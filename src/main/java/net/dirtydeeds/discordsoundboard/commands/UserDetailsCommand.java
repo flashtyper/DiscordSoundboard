@@ -2,6 +2,7 @@ package net.dirtydeeds.discordsoundboard.commands;
 
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
 import net.dirtydeeds.discordsoundboard.beans.User;
+import net.dirtydeeds.discordsoundboard.repository.UserRepository;
 import net.dirtydeeds.discordsoundboard.service.UserService;
 
 /**
@@ -17,7 +18,7 @@ public class UserDetailsCommand extends Command {
     public UserDetailsCommand(UserService userService, SoundPlayer soundPlayer) {
         this.userService = userService;
         this.soundPlayer = soundPlayer;
-        this.name = "userDetails";
+        this.name = "userdetails";
         this.help = "userDetails userName - Get details for user";
     }
 
