@@ -1,7 +1,7 @@
 # DiscordSoundboard
 
 Was wird hier gemacht:
-Markup :
+
 * Chat Commands weg
 * GUI besser anpassen
 * Datenbank neu machen
