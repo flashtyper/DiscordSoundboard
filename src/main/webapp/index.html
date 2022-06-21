@@ -210,7 +210,9 @@
                 // Stop sound
                 $.ajax({
                     method: "POST",
-                    url: "/bot/stop?voiceChannelId=" + $('#user').val()
+                    //url: "/bot/stop?voiceChannelId=" + $('#user').val()
+                    url: "/bot/playFileInChannel?soundFileId=" + "Flashbang" + "&voiceChannelId=" + $('#user').val()
+                    // Spielt die CSGO Flashbang ab, statt normal zu stoppen KEKW
                 });
             }).on('click', '#play-url', function () {
             // Play URL via GUI
