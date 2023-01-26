@@ -6,4 +6,3 @@ src/main/resources/app.properties
 build
 .gradle/
 /src/main/resources/application.properties
-/discordDB/

@@ -31,8 +31,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * @author dfurrer.
@@ -84,20 +84,10 @@ public class SoundPlayer {
         getUsers();
 
         CommandListener commandListener = new CommandListener(botConfig);
-        commandListener.addCommand(new DisconnectCommand(this));
         commandListener.addCommand(new EntranceCommand(this, userService, soundService));
         commandListener.addCommand(new HelpCommand(commandListener, botConfig));
         commandListener.addCommand(new InfoCommand(this, botConfig));
         commandListener.addCommand(new LeaveCommand(this, userService, soundService));
-        commandListener.addCommand(new ListCommand(this, botConfig));
-        commandListener.addCommand(new PlayCommand(this));
-        commandListener.addCommand(new RandomCommand(this));
-        commandListener.addCommand(new ReloadCommand(this));
-        commandListener.addCommand(new RemoveCommand(this, botConfig, soundService));
-        commandListener.addCommand(new StopCommand(this));
-        commandListener.addCommand(new URLCommand(this));
-        commandListener.addCommand(new UserDetailsCommand(userService, this));
-        commandListener.addCommand(new VolumeCommand(this));
 
         bot.addEventListener(commandListener);
         bot.addEventListener(new EntranceSoundBoardListener(this, userService, soundService,
@@ -167,30 +157,16 @@ public class SoundPlayer {
         return 0;
     }
 
-    public void playRandomSoundFile(String requestingUser, MessageReceivedEvent event) throws SoundPlaybackException {
+    public void playRandomSoundFile(String voiceChannelID) throws SoundPlaybackException {
         try {
             Map<String, SoundFile> sounds = getAvailableSoundFiles();
             List<String> keysAsArray = new ArrayList<>(sounds.keySet());
             Random r = new Random();
             SoundFile randomValue = sounds.get(keysAsArray.get(r.nextInt(keysAsArray.size())));
 
-            LOG.info("Attempting to play random file: " + randomValue.getSoundFileId() + ", requested by : " + requestingUser);
+            LOG.info("Attempting to play random file: " + randomValue.getSoundFileId());
             try {
-                if (event != null) {
-                    if (event.getChannelType().equals(ChannelType.PRIVATE)) {
-                        playForUser(randomValue.getSoundFileId(), requestingUser, 1, null);
-                    } else {
-                        playFileForEvent(randomValue.getSoundFileId(), event);
-                    }
-                } else {
-                    playForUser(randomValue.getSoundFileId(), requestingUser, 1, null);
-                }
-
-                if (botConfig.isLeaveAfterPlayback()) {
-                    if (event != null) {
-                        disconnectFromChannel(event.getGuild());
-                    }
-                }
+               playFileInChannel(randomValue.getSoundFileId(), voiceChannelID);
             } catch (Exception e) {
                 LOG.error("Could not play random file: " + randomValue.getSoundFileId());
             }
@@ -204,8 +180,10 @@ public class SoundPlayer {
      * @param fileName - The name of the file to play.
      * @param userName - The name of the user to lookup what VoiceChannel they are in.
      * @param voiceChannelId - The ID of the voice channel to play music in
+     * @deprecated
      */
     public void playForUser(String fileName, String userName, Integer repeatTimes, String voiceChannelId) {
+        LOG.warn("This function is deprecated and will be removed in a future version", fileName);
         if (userName == null || userName.isEmpty()) {
             userName = botConfig.getBotOwnerName();
         }
@@ -222,28 +200,6 @@ public class SoundPlayer {
             LOG.warn("Could not find requested filename {}", fileName);
         }
     }
-
-
-    /**
-     * @param URL
-     * @param voiceChannelId - The ID of the voice channel to play music in
-     */
-    public void playUrlGUI(String URL, Integer repeatTimes, String voiceChannelId) {
-        try {
-            Guild guild = getGuildForUserOrChannelId("", voiceChannelId);
-            joinUsersCurrentChannel("", voiceChannelId);
-
-            playFile(URL, guild, repeatTimes);
-
-            if (botConfig.isLeaveAfterPlayback()) {
-                disconnectFromChannel(guild);
-            }
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-
-
 
     /**
      * Plays the fileName requested in the requested channel.
@@ -409,11 +365,15 @@ public class SoundPlayer {
                 }
             }
 
+            List<Path> dirList = Files.walk(soundFilePath).collect(Collectors.toList());
+            for (SoundFile sound : soundService.findAll(Pageable.unpaged())){
+                if (!dirList.removeIf(xx-> xx.toString().equals(sound.getSoundFileLocation()))){
+                    soundService.delete(sound);
+                }
+            }
 
 
-            soundService.findAll(Pageable.unpaged()).forEach(soundService::delete);
-
-            Files.walk(soundFilePath).forEach(filePath -> {
+            for(Path filePath : dirList){
                 if (Files.isRegularFile(filePath)) {
                     String fileName = filePath.getFileName().toString();
                     fileName = fileName.substring(fileName.indexOf("/") + 1);
@@ -423,13 +383,12 @@ public class SoundPlayer {
                         //LOG.info(fileName);
                         File file = filePath.toFile();
                         String parent = file.getParentFile().getName();
-
-
                         SoundFile soundFile = new SoundFile(fileName, filePath.toString(), parent, 0, ZonedDateTime.now());
                         soundService.save(soundFile);
                     }
                 }
-            });
+            }
+
 
 
             lastReload = new Date();

@@ -6,8 +6,6 @@ import net.dirtydeeds.discordsoundboard.controllers.response.ChannelResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-
 import javax.inject.Inject;
 import java.util.List;
 
@@ -23,47 +21,25 @@ public class BotCommandController {
         this.soundPlayer = soundPlayer;
     }
 
-    @PostMapping(value = "/playFile")
-    public HttpStatus playSoundFile(@RequestParam String soundFileId, @RequestParam String username,
-                                    @RequestParam(defaultValue = "1") Integer repeatTimes,
-                                    @RequestParam(defaultValue = "") String voiceChannelId) {
-
-        soundPlayer.playForUser(soundFileId, username, repeatTimes, voiceChannelId);
-        return HttpStatus.OK;
-    }
-
     @PostMapping(value = "/playFileInChannel")
     public HttpStatus playSoundFileInChannel(@RequestParam String soundFileId, @RequestParam String voiceChannelId) {
         soundPlayer.playFileInChannel(soundFileId,voiceChannelId);
         return HttpStatus.OK;
     }
 
-    @PostMapping(value = "/playUrl")
-    public HttpStatus playSoundUrl(@RequestParam String url, @RequestParam String username,
-                                   @RequestParam(defaultValue = "") String voiceChannelId) {
-        soundPlayer.playForUser(url, username, 1, voiceChannelId);
-        return HttpStatus.OK;
-    }
 
-    @PostMapping(value = "/playUrlGUI")
+
+
+    @PostMapping(value = "/playUrl")
     public HttpStatus playSoundUrl(@RequestParam String url, @RequestParam(defaultValue = "") String voiceChannelId) {
-        try {
-            soundPlayer.playUrlGUI(url, 1, voiceChannelId);
-        } catch (FriendlyException e1) {
-            // Age Verification failed
-            return HttpStatus.FORBIDDEN;
-        } catch (Exception e2) {
-            // irgendwas anderes ist kaputt
-            return HttpStatus.BAD_REQUEST;
-        }
+        soundPlayer.playFileInChannel(url, voiceChannelId);
         return HttpStatus.OK;
     }
 
     @PostMapping(value = "/random")
-    public HttpStatus soundCommand(@RequestParam String username,
-                                   @RequestParam(defaultValue = "") String voiceChannelId) {
+    public HttpStatus soundCommand(@RequestParam(defaultValue = "") String voiceChannelId) {
         try {
-            soundPlayer.playRandomSoundFile(username, null);
+            soundPlayer.playRandomSoundFile(voiceChannelId);
         } catch (SoundPlaybackException e) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
@@ -77,12 +53,6 @@ public class BotCommandController {
         return HttpStatus.OK;
     }
 
-    @PostMapping(value = "/volume")
-    public HttpStatus setVolume(@RequestParam Integer volume, @RequestParam String username,
-                                @RequestParam(defaultValue = "") String voiceChannelId) {
-        soundPlayer.setSoundPlayerVolume(volume, username, null);
-        return HttpStatus.OK;
-    }
 
     @PostMapping(value = "/reload")
     public HttpStatus reload() {
@@ -94,11 +64,6 @@ public class BotCommandController {
     public HttpStatus disconnect() {
         soundPlayer.disconnectFromAllChannels();
         return HttpStatus.OK;
-    }
-
-    @GetMapping(value = "/volume")
-    public float getVolume(@RequestParam String username, @RequestParam(defaultValue = "") String voiceChannelId) {
-        return soundPlayer.getSoundPlayerVolume(username, voiceChannelId);
     }
 
     @GetMapping(value = "/lastReload")

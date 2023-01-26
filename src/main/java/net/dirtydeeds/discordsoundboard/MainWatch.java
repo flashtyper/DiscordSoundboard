@@ -56,8 +56,6 @@ public class MainWatch {
 
             });
 
-
-
             while (true) {
                 final WatchKey watchKey;
                 try {
@@ -65,9 +63,6 @@ public class MainWatch {
                 } catch (InterruptedException ex) {
                     return;
                 }
-
-
-
                 watchKey.pollEvents().forEach(event -> {
                     Path eventKeyPath = watchKeyPathMap.get(watchKey);
                     if (event.context().toString().contains("part")){
