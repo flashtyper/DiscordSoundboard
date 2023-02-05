@@ -85,7 +85,6 @@ public class SoundPlayer {
 
         CommandListener commandListener = new CommandListener(botConfig);
         commandListener.addCommand(new EntranceCommand(this, userService, soundService));
-        commandListener.addCommand(new HelpCommand(commandListener, botConfig));
         commandListener.addCommand(new InfoCommand(this, botConfig));
         commandListener.addCommand(new LeaveCommand(this, userService, soundService));
 
@@ -96,7 +95,6 @@ public class SoundPlayer {
         bot.addEventListener(new MovedChannelListener(this, userService, soundService,
                 botConfig.isPlayEntranceOnMove(), botConfig));
         bot.addEventListener(new BotLeaveListener(botConfig));
-        bot.addEventListener(new FileAttachmentListener(botConfig));
 
         ConnectorNativeLibLoader.loadConnectorLibrary();
 
@@ -124,38 +122,6 @@ public class SoundPlayer {
         return lastReload.getTime()/1000L;
     }
 
-    /**
-     * Sets volume of the player.
-     *
-     * @param volume - The volume value to set.
-     * @param voiceChannelId - The voice channel of the guild to set volume for
-     */
-    public void setSoundPlayerVolume(int volume, String user, String voiceChannelId) {
-        Guild guild = getGuildForUserOrChannelId(user, voiceChannelId);
-        if (guild != null) {
-            AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
-            if (handler != null) {
-                handler.getPlayer().setVolume(volume);
-            }
-        }
-    }
-
-    /**
-     * Returns the current volume
-     *
-     * @return float representing the current volume.
-     */
-    public float getSoundPlayerVolume(String user, String voiceChannelId) {
-        Guild guild = getGuildForUserOrChannelId(user, voiceChannelId);
-        if (guild != null) {
-            AudioHandler handler = (AudioHandler) guild.getAudioManager().getSendingHandler();
-            if (handler != null) {
-                return handler.getPlayer().getVolume();
-
-            }
-        }
-        return 0;
-    }
 
     public void playRandomSoundFile(String voiceChannelID) throws SoundPlaybackException {
         try {
@@ -172,32 +138,6 @@ public class SoundPlayer {
             }
         } catch (Exception e) {
             throw new SoundPlaybackException("Problem playing random file.");
-        }
-    }
-
-    /**
-     * Joins the channel of the user provided and then plays a file.
-     * @param fileName - The name of the file to play.
-     * @param userName - The name of the user to lookup what VoiceChannel they are in.
-     * @param voiceChannelId - The ID of the voice channel to play music in
-     * @deprecated
-     */
-    public void playForUser(String fileName, String userName, Integer repeatTimes, String voiceChannelId) {
-        LOG.warn("This function is deprecated and will be removed in a future version", fileName);
-        if (userName == null || userName.isEmpty()) {
-            userName = botConfig.getBotOwnerName();
-        }
-        try {
-            Guild guild = getGuildForUserOrChannelId(userName, voiceChannelId);
-            joinUsersCurrentChannel(userName, voiceChannelId);
-
-            playFile(fileName, guild, repeatTimes);
-
-            if (botConfig.isLeaveAfterPlayback()) {
-                disconnectFromChannel(guild);
-            }
-        } catch (Exception e) {
-            LOG.warn("Could not find requested filename {}", fileName);
         }
     }
 
@@ -299,14 +239,14 @@ public class SoundPlayer {
      * @return List of soundboard users.
      */
     public List<net.dirtydeeds.discordsoundboard.beans.User> getUsers() {
-        String userNameToSelect = botConfig.getBotOwnerName();
+        //String userNameToSelect = botConfig.getBotOwnerName();
         List<User> users = new ArrayList<>();
         for (net.dv8tion.jda.api.entities.User discordUser : bot.getUsers()) {
             boolean selected = false;
             String username = discordUser.getName();
-            if (userNameToSelect != null && userNameToSelect.equals(username)) {
+            //if (userNameToSelect != null && userNameToSelect.equals(username)) {
                 selected = true;
-            }
+            //}
             Optional<User> optionalUser = userService.findById(discordUser.getId());
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
@@ -389,8 +329,6 @@ public class SoundPlayer {
                 }
             }
 
-
-
             lastReload = new Date();
         } catch (IOException e) {
             LOG.error(e.toString());
@@ -439,27 +377,6 @@ public class SoundPlayer {
             LOG.warn("Problem moving to requested users channel. Maybe user, " + event.getAuthor().getName() + " is not connected to Voice?");
         } else {
             moveToChannel(channel, guild);
-        }
-    }
-
-    /**
-     * Join the users current channel.
-     */
-    private void joinUsersCurrentChannel(String userName, String voiceChannelId) {
-        if (botConfig.isControlByChannel() && !StringUtils.isBlank(voiceChannelId)) {
-            moveToChannel(bot.getVoiceChannelById(voiceChannelId), Objects.requireNonNull(bot.getVoiceChannelById(voiceChannelId)).getGuild());
-        } else {
-            for (Guild guild : bot.getGuilds()) {
-                for (VoiceChannel channel : guild.getVoiceChannels()) {
-                    for (Member user : channel.getMembers()) {
-                        if (user.getEffectiveName().equalsIgnoreCase(userName)
-                                || user.getUser().getName().equalsIgnoreCase(userName)
-                                || user.getId().equals(userName)) {
-                            moveToChannel(channel, guild);
-                        }
-                    }
-                }
-            }
         }
     }
 

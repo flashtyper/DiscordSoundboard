@@ -29,7 +29,6 @@ public class UserController {
     @GetMapping("/findAll")
     public ResponseEntity<Iterable<User>> getAll() {
         //Need to call this to refresh the list of users.
-        soundPlayer.getUsers();
         Pageable wholePage = Pageable.unpaged();
         return new ResponseEntity<>(userService.findAll(wholePage), HttpStatus.OK);
     }

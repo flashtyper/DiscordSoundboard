@@ -46,8 +46,6 @@ public class BotConfig {
     String bannedUsersString;
     @Value("${activityString:}")
     String activityString;
-    @Value("${username_to_join_channel:}")
-    String botOwnerName;
     @Value("${sounds_directory:}")
     String soundFileDir;
     @Value("${maxFileSizeInBytes:10000000}")
