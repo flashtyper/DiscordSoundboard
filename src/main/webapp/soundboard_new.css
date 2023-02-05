@@ -1,0 +1,20 @@
+.oi-navbar  {
+    background-color:  #202124 !important;
+    border-bottom:  solid 1px;
+    border-bottom-color: rgba(255,255,255,.2);
+}
+
+html, body {
+    background-color: #202124;
+    width: 100vw;
+    min-height: 100vh;
+}
+
+.oi-sound-container{
+    text-align: justify;
+}
+
+.oi-button { 
+    color: rgba(255,255,255,.5) !important;
+}
+
