@@ -6,7 +6,7 @@ import net.dirtydeeds.discordsoundboard.beans.User;
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
 import net.dirtydeeds.discordsoundboard.service.SoundService;
 import net.dirtydeeds.discordsoundboard.service.UserService;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.h2.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +40,9 @@ public class EntranceSoundBoardListener extends ListenerAdapter {
     }
 
     @Override
-    public void onGuildVoiceJoin(@NotNull GuildVoiceJoinEvent event) {
-        if (playEntranceOnJoin && !event.getMember().getUser().isBot()) {
+    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
+
+        if (event.getChannelJoined() != null && event.getChannelLeft() == null && playEntranceOnJoin && !event.getMember().getUser().isBot()) {
             String userJoined = event.getMember().getEffectiveName();
             String userId = event.getMember().getId();
 
@@ -50,16 +51,16 @@ public class EntranceSoundBoardListener extends ListenerAdapter {
                 if (!StringUtils.isNullOrEmpty(user.getEntranceSound())) {
                     String entranceSound = user.getEntranceSound();
                     LOG.info(String.format("Playing entrance sound %s", entranceSound));
-                    bot.playFileInChannel(entranceSound, event.getChannelJoined());
+                    bot.playFileInChannel(entranceSound, event.getChannelJoined().asVoiceChannel());
                 } else if (!StringUtils.isNullOrEmpty(botConfig.getEntranceForAll())) {
                     LOG.info(String.format("Playing entrance for all sound %s", botConfig.getEntranceForAll()));
-                    bot.playFileInChannel(botConfig.getEntranceForAll(), event.getChannelJoined());
+                    bot.playFileInChannel(botConfig.getEntranceForAll(), event.getChannelJoined().asVoiceChannel());
                 } else {
                     //If DB doesn't have an entrance sound check for a file with the same name as the user
                     SoundFile entranceFile = soundService.findOneBySoundFileIdIgnoreCase(user.getUsername());
                     if (entranceFile != null) {
                         try {
-                            bot.playFileInChannel(entranceFile.getSoundFileId(), event.getChannelJoined());
+                            bot.playFileInChannel(entranceFile.getSoundFileId(), event.getChannelJoined().asVoiceChannel());
                             LOG.info(String.format("Playing entrance sound %s", entranceFile.getSoundFileId()));
                         } catch (Exception e) {
                             LOG.error("Could not play file for entrance of {}", userJoined);

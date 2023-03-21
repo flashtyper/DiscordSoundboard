@@ -3,7 +3,6 @@ package net.dirtydeeds.discordsoundboard.commands;
 import lombok.Getter;
 import net.dirtydeeds.discordsoundboard.util.BotUtils;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;

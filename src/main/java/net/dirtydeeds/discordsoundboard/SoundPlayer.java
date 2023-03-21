@@ -12,7 +12,9 @@ import net.dirtydeeds.discordsoundboard.service.UserService;
 import net.dirtydeeds.discordsoundboard.util.ShutdownManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
 import net.dv8tion.jda.internal.utils.PermissionUtil;
@@ -31,7 +33,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -118,8 +119,8 @@ public class SoundPlayer {
         return returnFiles;
     }
 
-    public long getLastReloadTimestamp(){
-        return lastReload.getTime()/1000L;
+    public long getLastReloadTimestamp() {
+        return lastReload.getTime() / 1000L;
     }
 
 
@@ -132,7 +133,7 @@ public class SoundPlayer {
 
             LOG.info("Attempting to play random file: " + randomValue.getSoundFileId());
             try {
-               playFileInChannel(randomValue.getSoundFileId(), voiceChannelID);
+                playFileInChannel(randomValue.getSoundFileId(), voiceChannelID);
             } catch (Exception e) {
                 LOG.error("Could not play random file: " + randomValue.getSoundFileId());
             }
@@ -159,16 +160,16 @@ public class SoundPlayer {
     }
 
     public void playFileInChannel(String fileName, String channelId) {
-       VoiceChannel channel = bot.getVoiceChannelById(channelId);
-       playFileInChannel(fileName,channel);
+        VoiceChannel channel = bot.getVoiceChannelById(channelId);
+        playFileInChannel(fileName, channel);
     }
 
     /**
      * Plays the fileName requested.
      *
-     * @param fileName     - The name of the file to play.
-     * @param event        -  The event that triggered the sound playing request. The event is used to find the channel to play
-     *                     the sound back in.
+     * @param fileName - The name of the file to play.
+     * @param event    -  The event that triggered the sound playing request. The event is used to find the channel to play
+     *                 the sound back in.
      */
     private void playFileForEvent(String fileName, MessageReceivedEvent event) {
         SoundFile fileToPlay = soundService.findOneBySoundFileIdIgnoreCase(fileName);
@@ -245,7 +246,7 @@ public class SoundPlayer {
             boolean selected = false;
             String username = discordUser.getName();
             //if (userNameToSelect != null && userNameToSelect.equals(username)) {
-                selected = true;
+            selected = true;
             //}
             Optional<User> optionalUser = userService.findById(discordUser.getId());
             if (optionalUser.isPresent()) {
@@ -306,14 +307,14 @@ public class SoundPlayer {
             }
 
             List<Path> dirList = Files.walk(soundFilePath).collect(Collectors.toList());
-            for (SoundFile sound : soundService.findAll(Pageable.unpaged())){
-                if (!dirList.removeIf(xx-> xx.toString().equals(sound.getSoundFileLocation()))){
+            for (SoundFile sound : soundService.findAll(Pageable.unpaged())) {
+                if (!dirList.removeIf(xx -> xx.toString().equals(sound.getSoundFileLocation()))) {
                     soundService.delete(sound);
                 }
             }
 
 
-            for(Path filePath : dirList){
+            for (Path filePath : dirList) {
                 if (Files.isRegularFile(filePath)) {
                     String fileName = filePath.getFileName().toString();
                     fileName = fileName.substring(fileName.indexOf("/") + 1);
@@ -339,7 +340,7 @@ public class SoundPlayer {
     /**
      * Looks through all the guilds the bot has access to and returns the VoiceChannel the requested user is connected to.
      *
-     * @param userName - The username to look for.
+     * @param userName       - The username to look for.
      * @param voiceChannelId - The voice channel to return the guild for.
      * @return The voice channel the user is connected to. If user is not connected to a voice channel will return null.
      */
@@ -397,11 +398,11 @@ public class SoundPlayer {
         synchronized (this) {
             try {
                 while (!audioManager.isConnected()) {
-                        wait(waitTime);
-                        i++;
-                        if (i >= maxIterations) {
-                            break; //break out if after 1 second it doesn't get a connection;
-                        }
+                    wait(waitTime);
+                    i++;
+                    if (i >= maxIterations) {
+                        break; //break out if after 1 second it doesn't get a connection;
+                    }
 
                 }
             } catch (InterruptedException e) {
@@ -433,36 +434,39 @@ public class SoundPlayer {
         return channel;
     }
 
-    private List<VoiceChannel> getCurrentVoiceChannel(){
+    private List<VoiceChannel> getCurrentVoiceChannel() {
         List<VoiceChannel> connectedChannel = new LinkedList<VoiceChannel>();
-        for (AudioManager audioManager : bot.getAudioManagers()){
-            connectedChannel.add(audioManager.getConnectedChannel());
+        for (AudioManager audioManager : bot.getAudioManagers()) {
+            if (audioManager.getConnectedChannel() != null) {
+                connectedChannel.add(audioManager.getConnectedChannel().asVoiceChannel());
+            }
         }
         return connectedChannel;
     }
 
-    private boolean isAllowedToJoinChannel(VoiceChannel channel){
-        return PermissionUtil.checkPermission(channel,channel.getGuild().getSelfMember(), Permission.VOICE_CONNECT);
+    private boolean isAllowedToJoinChannel(VoiceChannel channel) {
+        return PermissionUtil.checkPermission(channel, channel.getGuild().getSelfMember(), Permission.VOICE_CONNECT);
     }
 
     public List<ChannelResponse> getVoiceChannels() {
         List<VoiceChannel> connectedChannel = getCurrentVoiceChannel();
 
+
         return bot.getVoiceChannels().stream()
                 .map(v -> {
-                    boolean isCurrentChannel = false;
-                    for (VoiceChannel channel : connectedChannel){
-                        if (channel != null && channel.getId().equals(v.getId())){
-                            isCurrentChannel = true;
+                            boolean isCurrentChannel = false;
+                            for (VoiceChannel channel : connectedChannel) {
+                                if (channel != null && channel.getId().equals(v.getId())) {
+                                    isCurrentChannel = true;
+                                }
+                            }
+                            if (isAllowedToJoinChannel(v)) {
+                                return new ChannelResponse(v.getName(), v.getId(), v.getGuild().getName(),
+                                        v.getGuild().getId(), isCurrentChannel);
+                            }
+                            return null;
                         }
-                    }
-                    if (isAllowedToJoinChannel(v)){
-                        return new ChannelResponse(v.getName(), v.getId(), v.getGuild().getName(),
-                                v.getGuild().getId(), isCurrentChannel);
-                    }
-                    return null;
-                }
-        ).collect(Collectors.toList());
+                ).collect(Collectors.toList());
     }
 
     public void disconnectFromChannel(Guild guild) {

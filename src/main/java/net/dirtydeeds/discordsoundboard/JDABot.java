@@ -6,6 +6,7 @@ import net.dirtydeeds.discordsoundboard.handlers.PlayerManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.exceptions.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
@@ -41,16 +42,14 @@ public class JDABot {
 
             String activityString = botConfig.getActivityString();
             if (ObjectUtils.isEmpty(activityString)) {
-                jda.getPresence().setActivity(Activity.of(Activity.ActivityType.DEFAULT,
+                jda.getPresence().setActivity(Activity.of(Activity.ActivityType.LISTENING,
                         "Type " + botConfig.getCommandCharacter() + "help for a list of commands."));
             } else {
-                jda.getPresence().setActivity(Activity.of(Activity.ActivityType.DEFAULT, activityString));
+                jda.getPresence().setActivity(Activity.of(Activity.ActivityType.LISTENING, activityString));
             }
-
         } catch (IllegalArgumentException e) {
             LOG.warn("The config was not populated. Please enter an email and password.");
-        } catch (
-                LoginException e) {
+        } catch (InvalidTokenException e) {
             LOG.warn("The provided bot token was incorrect. Please provide valid details.");
         } catch (InterruptedException e) {
             LOG.error("Login Interrupted.");

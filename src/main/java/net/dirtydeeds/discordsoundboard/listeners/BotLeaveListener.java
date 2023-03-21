@@ -29,9 +29,11 @@ public class BotLeaveListener extends ListenerAdapter {
 
     private boolean isAlone(Guild guild) {
         if (guild.getAudioManager().getConnectedChannel() == null) return false;
-        return guild.getAudioManager().getConnectedChannel().getMembers().stream()
+        boolean ret = guild.getAudioManager().getConnectedChannel().getMembers().stream()
                 .noneMatch(x ->
                         !Objects.requireNonNull(x.getVoiceState()).isDeafened()
                                 && !x.getUser().isBot());
+        System.out.println(ret);
+        return ret;
     }
 }
