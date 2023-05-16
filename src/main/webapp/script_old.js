@@ -40,11 +40,19 @@ async function getCategories() {
     body.sort((a,b)=>{
         return (a < b) ? -1 : (a > b) ? 1 : 0;
     });
-    var inHTML = ''
+    var inHTML = '<li class="uk-nav-header">Kategorien</li>'
+    inHTML+='<li kategorie="Alle" class="uk-active kategorie" ><a kategorie="Alle" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Alle</a></li>'
+    inHTML+='<li kategorie="Neu" class="kategorie" ><a kategorie="Neu" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Neu</a></li>'
+   
+    inHTML+= '<li class="uk-nav-divider"></li>'
+
     body.forEach((kat, i) => {
         inHTML += ('<li  kategorie="' + kat + '" class="kategorie"><a kategorie="' + kat + '" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> ' + kat + '</a></li>')
     });
+    document.getElementById('kat_liste').innerHTML = '';
     document.getElementById('kat_liste').innerHTML += inHTML;
+    document.getElementById('kat_liste_sidebar').innerHTML = '';
+    document.getElementById('kat_liste_sidebar').innerHTML += inHTML;
 }
 
 async function getChannels(){
@@ -60,10 +68,13 @@ async function getChannels(){
             inHTML +='<option value="' + chan.id + '"' + ((chan.defaultChannel) ? 'selected' : '') + '>' + chan.name + '</option>'
         }       
     });
+    document.getElementById('select_channel').innerHTML = '';
     document.getElementById('select_channel').innerHTML += inHTML;
 }
 
 async function getAllSounds() {
+    const noti = UIkit.notification("<span class=\"uk-margin-small-right\" uk-spinner></span> Lade Sounds", {pos: 'top-right', timeout: 0})
+    
     const response = await fetch('api/soundFiles/findAll');
 
     if (!response.ok) {
@@ -82,20 +93,24 @@ async function getAllSounds() {
     sounds.forEach((sound, i) => {
         var output = '<li times_played=';
         output += sound.timesPlayed + ' ';
+        output += 'date_added=' + sound.dateAdded + ' ';
         output += 'id="' + sound.soundFileId + '" data-kategorie="' + sound.category + '" ';
         output += 'class=" oi-button uk-button uk-button-default uk-margin-small-left uk-margin-small-right uk-margin-small-bottom">';
 
 
 
-        //if (lastWeek < Date.parse(sound.dateAdded)){
-        //    output += '<span class="uk-badge">NEU</span> ';
-        //}
+        if (lastWeek < new Date(sound.dateAdded)){
+            output += '<span class="uk-label uk-label-success">NEU</span> ';
+        }
 
         output += sound.soundFileId + '</li>';
         inHTML += output;
 
     });
+    UIkit.notification.closeAll()
+    document.getElementById('sounds').innerHTML = '';
     document.getElementById('sounds').innerHTML += inHTML;
+    
 }
 
 async function playSoundInChannel(soundId){
@@ -133,9 +148,20 @@ async function reload(){
     
 }
 
-async function search() {
+async function playURL(url){
+    selectedChannel = document.getElementById('select_channel').value;
+    response = await fetch('/bot/playUrl?url=' + url + '&voiceChannelId=' + selectedChannel, {
+        method: 'POST'
+      });
+    console.log(response);
+      if (!response.ok) {
+        const noti = UIkit.notification("<span class=\"uk-margin-small-right\" uk-icon=\"warning\"></span> Lade Sounds", {pos: 'top-right', timeout: 5, status: 'danger'})
+    
+      }
+}
+
+async function search(input) {
     var filter, card;
-    input = document.getElementById("suche").value;
     filter = input.toUpperCase();
     card = document.getElementById("sounds");
     sounds = card.getElementsByTagName("li");
@@ -153,11 +179,34 @@ async function search() {
 }
 
 async function filterCategory(cat) {
+    console.log(cat);
     var filter, card;
     card = document.getElementById("sounds");
     sounds = card.getElementsByTagName("li");
+    kategories = document.getElementsByClassName("kategorie");
+    [...kategories].forEach((kategorie, i) => {
+        if(kategorie.classList.contains("uk-active")){
+            kategorie.classList.remove("uk-active");
+        }
+        if (kategorie.getAttribute("kategorie")==cat){
+            kategorie.classList.add("uk-active");
+        }
+    });
     [...sounds].forEach((sound, i) => {
-        if(sound.getAttribute('data-kategorie') == cat){
+        if (cat === "Alle"){
+            sound.style.opacity = 1;
+            sound.style.display = "";
+        }else if (cat === "Neu"){
+            const today = new Date();
+            const  lastWeek = Date.parse(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
+            if (lastWeek < new Date(sound.getAttribute('date_added'))){
+                sound.style.opacity = 1;
+                sound.style.display = "";
+            }else{
+                sound.style.opacity = 0;
+            sound.style.display = "none"
+            }
+        }else if(sound.getAttribute('data-kategorie') == cat){
             sound.style.opacity = 1;
             sound.style.display = "";
         } else {
@@ -167,28 +216,83 @@ async function filterCategory(cat) {
     });
 }
 
+async function showSoundInfoModal(soundID){
+    sound = document.getElementById(soundID);
+    inHTML = '<button class="uk-modal-close-default" type="button" uk-close></button>';
+    inHTML += '<h2>' + sound.innerHTML +  '</h3>';
+    inHTML += '<ul class="uk-nav uk-nav-default">';
+    inHTML += '<li class="uk-nav-header">Kategorien</li>';
+    inHTML += '<li>' +sound.getAttribute('data-kategorie') + '</li>';
+    inHTML += '<li class="uk-nav-divider"></li>';
+    inHTML += '<li class="uk-nav-header">Hinzugefügt am</li>';
+    inHTML += '<li>' +(new Date(sound.getAttribute('date_added'))).toLocaleDateString() + '</li>';
+    inHTML += '<li class="uk-nav-divider"></li>';
+    inHTML += '<li class="uk-nav-header">Anzahl Wiedergaben seit letztem Reload</li>';
+    inHTML += '<li>' + sound.getAttribute('times_played') + '</li>';  
+    inHTML += '</ul>'
+    document.getElementById('modal-info-inner').innerHTML = '';
+    document.getElementById('modal-info-inner').innerHTML += inHTML;
+    UIkit.modal(document.getElementById('modal-info')).show();
+}
+
 async function setupListeners(){
-    document.addEventListener('click', (event) => {
+
+    document.addEventListener('contextmenu', (event) => {
         if (event.target.closest('#sounds li')) {
+            event.preventDefault();
+            showSoundInfoModal(event.target.id);
+            return false;
+        } else {
+            return true;
+        }
+        
+    }, false);
+
+    document.addEventListener('click', (event) => {
+        
+        if (event.target.closest('li > span')) {
+            playSoundInChannel(event.target.parentNode.id)
+        }else if (event.target.closest('#sounds li')) {
             playSoundInChannel(event.target.id);
         }else if (event.target.id=='random') {
             random();
+        }else if (event.target.id=='button_ALLE') {
+            filterCategory("Alle");
         }else if (event.target.id=='stop') {
             stop();
         }else if (event.target.id=='disconnect') {
             disconnect();
-        }else if (event.target.id == 'reload') {
+        }else if(event.target.id == "play" || event.target.parentNode.id == "play"|| event.target.parentNode.parentNode.id == "play") {
+            playURL(document.getElementById("url").value)
+        }else if(event.target.id == "play-sidebar" || event.target.parentNode.id == "play-sidebar"|| event.target.parentNode.parentNode.id == "play-sidebar") {
+            playURL(document.getElementById("url-sidebar").value)
+        }
+        else if (event.target.id == 'reload') {
             reload();
+        }else if (event.target.id == 'settings') {
+            UIkit.modal(document.getElementById('modal-settings')).show();
         } else if (event.target.closest('#kat_liste .kategorie')){
+            document.getElementById("suche-sidebar").value="";
+            document.getElementById("suche").value="";
             filterCategory(event.target.getAttribute('kategorie'));
             UIkit.offcanvas(document.getElementById('offcanvas')).hide();
-        } else if (event.target.id == 'modal-reload-ok'){
-            location.reload(); 
+        } else if (event.target.closest('#kat_liste_sidebar .kategorie')){
+            filterCategory(event.target.getAttribute('kategorie'));
+            UIkit.offcanvas(document.getElementById('offcanvas')).hide();
+        } else if (event.target.id == 'suche-sidebar-a' || event.target.parentNode.id == 'suche-sidebar-a'|| event.target.parentNode.parentNode.id == 'suche-sidebar-a'){
+            filterCategory("Alle");
+            search(document.getElementById("suche-sidebar").value)
+            UIkit.offcanvas(document.getElementById('offcanvas')).hide();
+        } else if (event.target.id == 'suche-a' || event.target.parentNode.id == 'suche-a'|| event.target.parentNode.parentNode.id == 'suche-a'){
+            filterCategory("Alle");
+            search(document.getElementById("suche").value)
         }
       });
     document.getElementById('suche').addEventListener('keydown',(event)=>{
-        search()
+        filterCategory("Alle");
+        search(document.getElementById("suche").value)
     });
+    
 }
 
 
@@ -224,17 +328,27 @@ async function setupReload(){
     
         const val = await response.text();
         if (val != lastReload){
-            clearInterval(intervalId)
-            UIkit.modal(document.getElementById('modal-reload')).show();
+            console.log(val);
+            console.log(lastReload);
+            lastReload=val;
+            reload();
+            //clearInterval(intervalId)
+            //UIkit.modal(document.getElementById('modal-reload')).show();
         }
     },5000);
 }
 
-window.ready(function() {
-    
+async function reload(){
     getCategories();
     getAllSounds();
     getChannels();
+   
+   
+}
+
+window.ready(function() {
+   
+    reload();
     setupListeners();
     setupReload();
     

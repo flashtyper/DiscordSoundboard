@@ -1,20 +1,95 @@
 .oi-navbar  {
-    background-color:  #202124 !important;
+    background-color: rgba(255,255,255,.1)!important ;
+    /*background-color:  #202124 !important;*/
     border-bottom:  solid 1px;
     border-bottom-color: rgba(255,255,255,.2);
+    position: fixed;
+    margin-top: 0px !important; 
+    top: 0px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 999;
+}
+.uk-description-list>dt{
+    color: rgba(255,255,255,.8) !important;
+}
+
+@media (max-width: 960px) {
+	.oi-navbar{
+        position: relative;
+    }
 }
 
 html, body {
-    background-color: #202124;
+    background-color: #202020;
     width: 100vw;
     min-height: 100vh;
 }
+
+
+#sherlock{
+    height: 70px ;
+}
+
 
 .oi-sound-container{
     text-align: justify;
 }
 
-.oi-button { 
-    color: rgba(255,255,255,.5) !important;
+@media (min-width: 960px) {
+	.oi-sound-container { 
+        padding-left: 20em;
+        padding-top: 80px;
+    }
 }
 
+#offcanvas .uk-offcanvas-bar{
+    padding-left: max(20px,env(safe-area-inset-left));
+}
+
+.oi-button { 
+    color: rgba(255,255,255,.8) !important;
+    background-color: #6c6c6c;
+}
+
+
+.uk-modal-body{
+    background-color: #464646 !important ;
+    
+}
+
+.uk-modal-header{
+    background-color: #464646 !important ;
+    
+}
+
+.uk-modal{
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+
+}
+
+
+.oi-sidebar-left {
+    z-index: 100;
+    position: fixed;
+    background-color: transparent !important ;
+    
+    top:0;
+    bottom: 0;
+    box-sizing: border-box;
+    width: 20em !important;
+    padding: 40px 40px 60px 40px;
+   
+    overflow:auto;
+}
+
+.oi-sidebar-container {
+
+    padding-top: 80px;
+}
+
+  .hide {
+   display: none;
+  }
