@@ -147,7 +147,7 @@ async function disconnect(){
       });   
 }
 
-async function reload(){
+async function reloadBot(){
     await fetch('/bot/reload', {
         method: 'POST'
       });  
@@ -273,7 +273,7 @@ async function setupListeners(){
         }else if(event.target.id == "play-sidebar" || event.target.parentNode.id == "play-sidebar"|| event.target.parentNode.parentNode.id == "play-sidebar") {
             playURL(document.getElementById("url-sidebar").value)
         }else if (event.target.id == 'reload') {
-            reload();
+            reloadBot();
         }else if (event.target.id == 'connect') {
             connect();
         }else if (event.target.id == 'settings') {
@@ -349,8 +349,6 @@ async function reload(){
     getCategories();
     getAllSounds();
     getChannels();
-   
-   
 }
 
 window.ready(function() {
