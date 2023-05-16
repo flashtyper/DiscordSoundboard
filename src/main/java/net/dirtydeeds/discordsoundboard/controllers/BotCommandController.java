@@ -27,8 +27,11 @@ public class BotCommandController {
         return HttpStatus.OK;
     }
 
-
-
+    @PostMapping(value = "/connect")
+    public HttpStatus connect(@RequestParam String voiceChannelId) {
+        soundPlayer.playFileInChannel(null, voiceChannelId);
+        return HttpStatus.OK;
+    }
 
     @PostMapping(value = "/playUrl")
     public HttpStatus playSoundUrl(@RequestParam String url, @RequestParam(defaultValue = "") String voiceChannelId) {

@@ -127,6 +127,12 @@ async function stop(){
       });
 }
 
+async function connect() {
+    selectedChannel = document.getElementById('select_channel').value;
+    await fetch('/bot/connect?voiceChannelId=' + selectedChannel,{
+        method: 'POST'
+    });
+}
 async function random(){
     selectedChannel = document.getElementById('select_channel').value;
     await fetch('/bot/random?voiceChannelId=' + selectedChannel, {
@@ -266,9 +272,10 @@ async function setupListeners(){
             playURL(document.getElementById("url").value)
         }else if(event.target.id == "play-sidebar" || event.target.parentNode.id == "play-sidebar"|| event.target.parentNode.parentNode.id == "play-sidebar") {
             playURL(document.getElementById("url-sidebar").value)
-        }
-        else if (event.target.id == 'reload') {
+        }else if (event.target.id == 'reload') {
             reload();
+        }else if (event.target.id == 'connect') {
+            connect();
         }else if (event.target.id == 'settings') {
             UIkit.modal(document.getElementById('modal-settings')).show();
         } else if (event.target.closest('#kat_liste .kategorie')){

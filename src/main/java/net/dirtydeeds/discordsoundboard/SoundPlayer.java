@@ -152,8 +152,10 @@ public class SoundPlayer {
         if (channel == null) return;
         moveToChannel(channel, channel.getGuild());
         LOG.info("Playing file for user: " + fileName + " in channel: " + channel.getName());
+        if (fileName != null) {
+            playFile(fileName, channel.getGuild(), 1);
 
-        playFile(fileName, channel.getGuild(), 1);
+        }
         if (botConfig.isLeaveAfterPlayback()) {
             disconnectFromChannel(channel.getGuild());
         }
