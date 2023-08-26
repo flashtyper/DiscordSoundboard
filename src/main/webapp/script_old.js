@@ -43,7 +43,7 @@ async function getCategories() {
     var inHTML = '<li class="uk-nav-header">Kategorien</li>'
     inHTML+='<li kategorie="Alle" class="uk-active kategorie" ><a kategorie="Alle" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Alle</a></li>'
     inHTML+='<li kategorie="Neu" class="kategorie" ><a kategorie="Neu" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Neu</a></li>'
-   
+    inHTML+='<li kategorie="Top10" class="kategorie" ><a kategorie="Top10" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Top 10</a></li>'
     inHTML+= '<li class="uk-nav-divider"></li>'
 
     body.forEach((kat, i) => {
@@ -110,7 +110,16 @@ async function getAllSounds() {
     UIkit.notification.closeAll()
     document.getElementById('sounds').innerHTML = '';
     document.getElementById('sounds').innerHTML += inHTML;
-    
+
+    sounds.sort((a,b)=>{
+        return (a.timesPlayed < b.timesPlayed) ? -1 : (a.timesPlayed > b.timesPlayed) ? 1 : 0;
+    });
+    let inHTML = "";
+    for(let i = 0; i < 10; i++) {
+
+    }
+    document.querySelector("[kategorie=Top10]");
+
 }
 
 async function playSoundInChannel(soundId){
@@ -260,23 +269,23 @@ async function setupListeners(){
             playSoundInChannel(event.target.parentNode.id)
         }else if (event.target.closest('#sounds li')) {
             playSoundInChannel(event.target.id);
-        }else if (event.target.id=='random') {
+        }else if (event.target.id === 'random') {
             random();
-        }else if (event.target.id=='button_ALLE') {
+        }else if (event.target.id === 'button_ALLE') {
             filterCategory("Alle");
-        }else if (event.target.id=='stop') {
+        }else if (event.target.id === 'stop') {
             stop();
-        }else if (event.target.id=='disconnect') {
+        }else if (event.target.id === 'disconnect') {
             disconnect();
-        }else if(event.target.id == "play" || event.target.parentNode.id == "play"|| event.target.parentNode.parentNode.id == "play") {
+        }else if(event.target.id === "play" || event.target.parentNode.id === "play"|| event.target.parentNode.parentNode.id === "play") {
             playURL(document.getElementById("url").value)
-        }else if(event.target.id == "play-sidebar" || event.target.parentNode.id == "play-sidebar"|| event.target.parentNode.parentNode.id == "play-sidebar") {
+        }else if(event.target.id === "play-sidebar" || event.target.parentNode.id === "play-sidebar"|| event.target.parentNode.parentNode.id === "play-sidebar") {
             playURL(document.getElementById("url-sidebar").value)
-        }else if (event.target.id == 'reload') {
+        }else if (event.target.id === 'reload') {
             reloadBot();
-        }else if (event.target.id == 'connect') {
+        }else if (event.target.id === 'connect') {
             connect();
-        }else if (event.target.id == 'settings') {
+        }else if (event.target.id === 'settings') {
             UIkit.modal(document.getElementById('modal-settings')).show();
         } else if (event.target.closest('#kat_liste .kategorie')){
             document.getElementById("suche-sidebar").value="";
@@ -286,11 +295,11 @@ async function setupListeners(){
         } else if (event.target.closest('#kat_liste_sidebar .kategorie')){
             filterCategory(event.target.getAttribute('kategorie'));
             UIkit.offcanvas(document.getElementById('offcanvas')).hide();
-        } else if (event.target.id == 'suche-sidebar-a' || event.target.parentNode.id == 'suche-sidebar-a'|| event.target.parentNode.parentNode.id == 'suche-sidebar-a'){
+        } else if (event.target.id === 'suche-sidebar-a' || event.target.parentNode.id === 'suche-sidebar-a'|| event.target.parentNode.parentNode.id === 'suche-sidebar-a'){
             filterCategory("Alle");
             search(document.getElementById("suche-sidebar").value)
             UIkit.offcanvas(document.getElementById('offcanvas')).hide();
-        } else if (event.target.id == 'suche-a' || event.target.parentNode.id == 'suche-a'|| event.target.parentNode.parentNode.id == 'suche-a'){
+        } else if (event.target.id === 'suche-a' || event.target.parentNode.id === 'suche-a'|| event.target.parentNode.parentNode.id === 'suche-a'){
             filterCategory("Alle");
             search(document.getElementById("suche").value)
         }
