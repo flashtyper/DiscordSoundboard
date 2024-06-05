@@ -1,6 +1,8 @@
 var category = 'All';
 var lastReload = 0;
 var intervalId;
+var sounds;
+
 
 function ready(fn) {
     if (document.readyState != 'loading') {
@@ -44,6 +46,7 @@ async function getCategories() {
     inHTML+='<li kategorie="Alle" class="uk-active kategorie"><a kategorie="Alle" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Alle</a></li>'
     inHTML+='<li kategorie="Neu" class="kategorie"><a kategorie="Neu" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Neu</a></li>'
     inHTML+='<li kategorie="Ranking" class="kategorie"><a kategorie="Ranking" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Ranking</a></li>'
+    inHTML+='<li kategorie="Last" class="kategorie"><a kategorie="Last" href="#"><span class="uk-margin-small-right" uk-icon="icon:  chevron-right"></span> Sortiert: Datum <span class="uk-margin-small-right" uk-icon="icon: triangle-down"></span></a></li>'
    
     inHTML+= '<li class="uk-nav-divider"></li>'
 
@@ -82,16 +85,16 @@ async function getAllSounds() {
     }
 
     const body = await response.json();
-    const sounds = body.content;
+    const soundsContent = body.content;
 
     const today = new Date();
     const  lastWeek = Date.parse(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
 
-    sounds.sort((a,b)=>{
+    soundsContent.sort((a,b)=>{
         return (a.soundFileId.toUpperCase() < b.soundFileId.toUpperCase()) ? -1 : (a.soundFileId.toUpperCase() > b.soundFileId.toUpperCase()) ? 1 : 0;
     });
     inHTML = '';
-    sounds.forEach((sound, i) => {
+    soundsContent.forEach((sound, i) => {
         var output = '<li times_played=';
         output += sound.timesPlayed + ' ';
         output += 'date_added=' + sound.dateAdded + ' ';
@@ -111,7 +114,7 @@ async function getAllSounds() {
     UIkit.notification.closeAll()
     document.getElementById('sounds').innerHTML = '';
     document.getElementById('sounds').innerHTML += inHTML;
-    return(sounds);
+    return(document.getElementById('sounds').getElementsByTagName("li"));
 }
 
 async function playSoundInChannel(soundId){
@@ -171,8 +174,8 @@ async function search(input) {
     var filter, card;
     filter = input.toUpperCase();
     card = document.getElementById("sounds");
-    sounds = card.getElementsByTagName("li");
-    [...sounds].forEach((sound, i) => {
+    soundsCurrent = card.getElementsByTagName("li");
+    [...soundsCurrent].forEach((sound, i) => {
         if(sound.id.toUpperCase().indexOf(filter) > -1){
             sound.style.opacity = 1;
             sound.style.display = "";
@@ -180,16 +183,15 @@ async function search(input) {
             sound.style.opacity = 0;
             sound.style.display = "none"
         }
-
-    
     });
 }
+
 
 async function filterCategory(cat) {
     console.log(cat);
     var filter;
     let card = document.getElementById("sounds");
-    let sounds = card.getElementsByTagName("li");
+    let soundsCurrent = card.getElementsByTagName("li");
     kategories = document.getElementsByClassName("kategorie");
     [...kategories].forEach((kategorie, i) => {
         if(kategorie.classList.contains("uk-active")){
@@ -206,65 +208,87 @@ async function filterCategory(cat) {
 		let bT = parseInt(b.getAttribute("times_played"));
 		return (aT > bT ? -1 : (aT < bT ? 1 : 0));
 	});
-	sorted_sounds.forEach((sound, i) => {
-            	if (i >= 0 && i <= 9) {
-		    sound.style.opacity = 1;
-	            sound.style.display = "";
+	let newBody = [];
+	for (let i = 0; i <= 9; i++) {
+		if (i >= 0 && i <= 9) {
+		    sorted_sounds[i].removeAttribute("style");
 		    if (i === 0) {
-			    sound.innerHTML = '<span>&#x1F947;</span> ' + sound.id;
+			    sorted_sounds[i].innerHTML = '<span>&#x1F947;</span> ' + sorted_sounds[i].id;
 		    } else if (i === 1) {
-			    sound.innerHTML = '<span>&#x1F948;</span> ' + sound.id;
+			    sorted_sounds[i].innerHTML = '<span>&#x1F948;</span> ' + sorted_sounds[i].id;
 		    } else if (i === 2) {
-     			    sound.innerHTML = '<span>&#x1F949;</span> ' + sound.id;
+     			    sorted_sounds[i].innerHTML = '<span>&#x1F949;</span> ' + sorted_sounds[i].id;
 		    } else if (i === 3) {
-			sound.innerHTML = '<span>&#x0034;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0034;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    } else if (i === 4) {
-			sound.innerHTML = '<span>&#x0035;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0035;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    }else if (i === 5) {
-			sound.innerHTML = '<span>&#x0036;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0036;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    }else if (i === 6) {
-			sound.innerHTML = '<span>&#x0037;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0037;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    }else if (i === 7) {
-			sound.innerHTML = '<span>&#x0038;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0038;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    }else if (i === 8) {
-			sound.innerHTML = '<span>&#x0039;&#xFE0F;&#x20E3;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x0039;&#xFE0F;&#x20E3;</span> ' + sorted_sounds[i].id;
 		    }else if (i === 9) {
-			sound.innerHTML = '<span>&#x1F51F;</span> ' + sound.id;
+			sorted_sounds[i].innerHTML = '<span>&#x1F51F;</span> ' + sorted_sounds[i].id;
 		    }
-
-		} else {
-	            sound.style.opacity = 0;
-	            sound.style.display = "none";
 		}
-	});
-    } else if (cat === "Alle") {
-	[...sounds].forEach((sound, i) => {
-		sound.style.opacity = 1;
-	        sound.style.display = "";
-	});
-    } else if (cat === "Neu") {
-            const today = new Date();
-            const  lastWeek = Date.parse(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
-           
-	    [...sounds].forEach((sound, i) => {
-		if (lastWeek < new Date(sound.getAttribute('date_added'))){
-                	sound.style.opacity = 1;
-        	        sound.style.display = "";
-	        } else {
-	            sound.style.opacity = 0;
-	            sound.style.display = "none";
-	        }
+		newBody.push(sorted_sounds[i]);
+	}
+	document.getElementById('sounds').innerHTML = "";
+	document.getElementById('sounds').append(...newBody);
+    } else if (cat === "Last") {
+    	let sorted_sounds = Array.from(sounds).sort((a,b)=>{
+            let aT = new Date(a.getAttribute("date_added"));
+            let bT = new Date(b.getAttribute("date_added"));
+            return (aT > bT ? -1 : (aT < bT ? 1 : 0));
 	    });
+        let newBody = [];
+        for (let i = 0; i <= sorted_sounds.length - sorted_sounds.length / 2; i++) {
+            sorted_sounds[i].style.opacity = 1;
+            sorted_sounds[i].style.display = 0;
+            newBody.push(sorted_sounds[i]);
+        }
+        document.getElementById('sounds').innerHTML = '';
+        document.getElementById('sounds').append(...newBody);
+    } else if (cat === "Alle") {
+        let sorted_sounds = Array.from(sounds).sort((a,b)=>{
+            let aT = a.id;
+            let bT = b.id;
+            return (aT < bT ? -1 : (aT > bT ? 1 : 0));
+        });
+        let newBody = [];
+        [...sorted_sounds].forEach((sound, i) => {
+            sound.removeAttribute("style");
+            newBody.push(sound);
+        });
+        document.getElementById('sounds').innerHTML = '';
+        document.getElementById('sounds').append(...newBody);
+    } else if (cat === "Neu") {
+        let newBody = [];
+        const today = new Date();
+        const lastWeek = Date.parse(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7));
+        [...sounds].forEach((sound, i) => {
+            if (lastWeek < new Date(sound.getAttribute('date_added'))){
+                sound.removeAttribute("style");
+                newBody.push(sound);
+            }
+        });
+        document.getElementById('sounds').innerHTML = '';
+        document.getElementById('sounds').append(...newBody);
     } else {
-	[...sounds].forEach((sound, i) => {
-		if(sound.getAttribute("data-kategorie") === cat) {
-			sound.style.opacity = 1;
-        	        sound.style.display = "";
-	        } else {
-	            sound.style.opacity = 0;
-	            sound.style.display = "none";
-		}
-	});	
+        [...sounds].forEach((sound, i) => {
+            if(sound.getAttribute("data-kategorie") === cat) {
+                    sound.style.opacity = 1;
+                    sound.style.display = "";
+                } else {
+                    sound.style.opacity = 0;
+                    sound.style.display = "none";
+            }
+        });
+        document.getElementById('sounds').innerHTML = '';
+        document.getElementById('sounds').append(...sounds);
     }
 }
 
@@ -424,7 +448,7 @@ async function setTotalNumberOfSounds(sounds) {
 
 async function reload(){
     getCategories();
-    let sounds = await getAllSounds();
+    sounds = await getAllSounds();
     setTotalNumberOfSounds(sounds);
     getChannels();
 }
