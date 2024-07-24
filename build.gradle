@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '2.6.5'
+        springBootVersion = '3.3.2'
     }
 
     dependencies {
@@ -14,7 +14,7 @@ plugins {
     id 'java'
     id 'idea'
     id 'distribution'
-    id 'org.springframework.boot' version '2.6.5'
+    id 'org.springframework.boot' version '3.3.2'
     id 'application'
 }
 
@@ -26,6 +26,10 @@ repositories {
     }
     maven {
         url 'https://jitpack.io'
+    }
+
+    maven{
+        url = "https://maven.lavalink.dev/releases"
     }
 }
 
@@ -55,34 +59,31 @@ tasks.named("bootJar") {
 }
 
 dependencies {
+
+
+
+
     implementation 'net.dv8tion:JDA:5.0.0-beta.6'
-    implementation 'com.github.walkyst:lavaplayer-fork:1.4.3'
+
+    implementation group: 'dev.arbjerg', name: 'lavaplayer', version: '2.2.1'
+
+    implementation 'dev.lavalink.youtube:v2:1.4.0'
+
     implementation 'com.github.aikaterna:lavaplayer-natives:original-SNAPSHOT'
-    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
-    implementation 'ch.qos.logback:logback-classic:1.2.11'
-    compileOnly 'org.projectlombok:lombok:1.18.22'
-    annotationProcessor 'org.projectlombok:lombok:1.18.22'
 
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.6.5'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '2.6.5'
+    implementation group: "jakarta.inject", name: "jakarta.inject-api", version: "2.0.1"
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: '2.6.5'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.6.5'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-rest', version: '2.6.6'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '3.3.2'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '3.3.2'
 
-    implementation group: 'com.h2database', name: 'h2', version: '1.4.200'
+    implementation group: "org.springframework.boot", name: "spring-boot-starter-validation", version: "3.3.2"
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: '3.3.2'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '3.3.2'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-rest', version: '3.3.2'
 
-    implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.6.6'
-
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    testImplementation "org.mockito:mockito-core:4.4.0"
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.3.1'
-    testCompileOnly 'org.projectlombok:lombok:1.18.22'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+    implementation group: 'com.h2database', name: 'h2', version: '2.3.230'
 }
 
 processResources {

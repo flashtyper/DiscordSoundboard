@@ -3,8 +3,8 @@ package net.dirtydeeds.discordsoundboard.beans;
 import lombok.*;
 import net.dv8tion.jda.api.JDA;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * Class that represents a user of discord.
@@ -17,7 +17,7 @@ import javax.persistence.Id;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class User {
+public class MyUser {
 
     @Id
     @NonNull
@@ -30,7 +30,7 @@ public class User {
     @NonNull
     private JDA.Status status;
 
-    public User(@NonNull String id, String username, @NonNull Boolean selected, @NonNull JDA.Status status) {
+    public MyUser(@NonNull String id, String username, @NonNull Boolean selected, @NonNull JDA.Status status) {
         this.id = id;
         this.username = username;
         this.selected = selected;

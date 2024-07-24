@@ -1,8 +1,7 @@
 package net.dirtydeeds.discordsoundboard.commands;
 
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
-import net.dirtydeeds.discordsoundboard.beans.User;
-import net.dirtydeeds.discordsoundboard.repository.UserRepository;
+import net.dirtydeeds.discordsoundboard.beans.MyUser;
 import net.dirtydeeds.discordsoundboard.service.UserService;
 
 /**
@@ -26,25 +25,25 @@ public class UserDetailsCommand extends Command {
     protected void execute(CommandEvent event) {
         if (!event.getArguments().isEmpty()) {
             String userNameOrId = event.getArguments().getFirst();
-            User user = userService.findOneByIdOrUsernameIgnoreCase(userNameOrId, userNameOrId);
-            if (user == null) {
+            MyUser myUser = userService.findOneByIdOrUsernameIgnoreCase(userNameOrId, userNameOrId);
+            if (myUser == null) {
                 net.dv8tion.jda.api.entities.User jdaUser = soundPlayer.retrieveUserById(userNameOrId);
                 if (jdaUser != null) {
-                    user = new User(jdaUser.getId(), jdaUser.getName(), false, jdaUser.getJDA().getStatus());
+                    myUser = new MyUser(jdaUser.getId(), jdaUser.getName(), false, jdaUser.getJDA().getStatus());
                 }
             }
-            if (user != null) {
+            if (myUser != null) {
                 StringBuilder response = new StringBuilder();
                 response.append("User details for ").append(userNameOrId).append("```")
-                        .append("\nDiscord Id: ").append(user.getId())
-                        .append("\nUsername: ").append(user.getUsername())
+                        .append("\nDiscord Id: ").append(myUser.getId())
+                        .append("\nUsername: ").append(myUser.getUsername())
                         .append("\nEntrance Sound: ");
-                if (user.getEntranceSound() != null) {
-                    response.append(user.getEntranceSound());
+                if (myUser.getEntranceSound() != null) {
+                    response.append(myUser.getEntranceSound());
                 }
                 response.append("\nLeave Sound: ");
-                if (user.getLeaveSound() != null) {
-                    response.append(user.getLeaveSound());
+                if (myUser.getLeaveSound() != null) {
+                    response.append(myUser.getLeaveSound());
                 }
                 response.append("```");
                 event.replyByPrivateMessage(response.toString());

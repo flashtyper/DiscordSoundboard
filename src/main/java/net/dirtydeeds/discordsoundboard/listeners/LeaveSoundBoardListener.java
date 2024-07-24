@@ -1,8 +1,8 @@
 package net.dirtydeeds.discordsoundboard.listeners;
 
 import net.dirtydeeds.discordsoundboard.BotConfig;
+import net.dirtydeeds.discordsoundboard.beans.MyUser;
 import net.dirtydeeds.discordsoundboard.beans.SoundFile;
-import net.dirtydeeds.discordsoundboard.beans.User;
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
 import net.dirtydeeds.discordsoundboard.service.SoundService;
 import net.dirtydeeds.discordsoundboard.service.UserService;
@@ -39,14 +39,14 @@ public class LeaveSoundBoardListener extends ListenerAdapter {
         if (event.getChannelJoined() == null) {
             String userDisconnected = event.getMember().getEffectiveName();
             String userDisconnectedId = event.getMember().getId();
-            User user = userService.findOneByIdOrUsernameIgnoreCase(userDisconnectedId, userDisconnected);
-            if (user != null) {
-                if (!StringUtils.isNullOrEmpty(user.getLeaveSound())) {
-                    bot.playFileInChannel(user.getLeaveSound(), event.getChannelLeft().asVoiceChannel());
+            MyUser myUser = userService.findOneByIdOrUsernameIgnoreCase(userDisconnectedId, userDisconnected);
+            if (myUser != null) {
+                if (!StringUtils.isNullOrEmpty(myUser.getLeaveSound())) {
+                    bot.playFileInChannel(myUser.getLeaveSound(), event.getChannelLeft().asVoiceChannel());
                 } else {
                     //If DB doesn't have a leave sound check for a file named with the userName + leave suffix
                     SoundFile leaveFile = soundService.findOneBySoundFileIdIgnoreCase(
-                            user.getUsername() + botConfig.getLeaveSuffix());
+                            myUser.getUsername() + botConfig.getLeaveSuffix());
                     if (leaveFile != null) {
                         try {
                             bot.playFileInChannel(leaveFile.getSoundFileId(), event.getChannelLeft().asVoiceChannel());

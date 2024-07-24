@@ -3,7 +3,12 @@ package net.dirtydeeds.discordsoundboard.handlers;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
+
+import com.sedmelluq.discord.lavaplayer.source.bandcamp.BandcampAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import net.dirtydeeds.discordsoundboard.JDABot;
 import net.dv8tion.jda.api.entities.Guild;
 
@@ -16,10 +21,14 @@ public class PlayerManager extends DefaultAudioPlayerManager {
     }
 
     public void init() {
-        AudioSourceManagers.registerRemoteSources(this);
         AudioSourceManagers.registerLocalSource(this);
-        source(YoutubeAudioSourceManager.class).setPlaylistPageCount(10);
+        this.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+        this.registerSourceManager(new BandcampAudioSourceManager());
+        this.registerSourceManager(new TwitchStreamAudioSourceManager());
+        this.registerSourceManager(new BeamAudioSourceManager());
+        this.registerSourceManager(new YoutubeAudioSourceManager());
     }
+
 
     public JDABot getBot()
     {

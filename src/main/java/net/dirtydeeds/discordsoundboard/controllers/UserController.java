@@ -1,7 +1,7 @@
 package net.dirtydeeds.discordsoundboard.controllers;
 
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
-import net.dirtydeeds.discordsoundboard.beans.User;
+import net.dirtydeeds.discordsoundboard.beans.MyUser;
 import net.dirtydeeds.discordsoundboard.service.UserService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RestController
 @RequestMapping("/api/users")
@@ -27,7 +27,7 @@ public class UserController {
     }
 
     @GetMapping("/findAll")
-    public ResponseEntity<Iterable<User>> getAll() {
+    public ResponseEntity<Iterable<MyUser>> getAll() {
         //Need to call this to refresh the list of users.
         Pageable wholePage = Pageable.unpaged();
         return new ResponseEntity<>(userService.findAll(wholePage), HttpStatus.OK);

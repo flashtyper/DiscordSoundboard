@@ -1,8 +1,10 @@
 package net.dirtydeeds.discordsoundboard;
 
 import com.sedmelluq.discord.lavaplayer.natives.ConnectorNativeLibLoader;
+import io.micrometer.common.util.StringUtils;
+import jakarta.annotation.PreDestroy;
+import net.dirtydeeds.discordsoundboard.beans.MyUser;
 import net.dirtydeeds.discordsoundboard.beans.SoundFile;
-import net.dirtydeeds.discordsoundboard.beans.User;
 import net.dirtydeeds.discordsoundboard.commands.*;
 import net.dirtydeeds.discordsoundboard.controllers.response.ChannelResponse;
 import net.dirtydeeds.discordsoundboard.listeners.*;
@@ -18,7 +20,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
 import net.dv8tion.jda.internal.utils.PermissionUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,8 @@ import org.springframework.boot.web.servlet.context.ServletWebServerApplicationC
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
@@ -241,27 +241,27 @@ public class SoundPlayer {
      *
      * @return List of soundboard users.
      */
-    public List<net.dirtydeeds.discordsoundboard.beans.User> getUsers() {
+    public List<MyUser> getUsers() {
         //String userNameToSelect = botConfig.getBotOwnerName();
-        List<User> users = new ArrayList<>();
+        List<MyUser> myUsers = new ArrayList<>();
         for (net.dv8tion.jda.api.entities.User discordUser : bot.getUsers()) {
             boolean selected = false;
             String username = discordUser.getName();
             //if (userNameToSelect != null && userNameToSelect.equals(username)) {
             selected = true;
             //}
-            Optional<User> optionalUser = userService.findById(discordUser.getId());
+            Optional<MyUser> optionalUser = userService.findById(discordUser.getId());
             if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
-                user.setSelected(selected);
-                users.add(user);
+                MyUser myUser = optionalUser.get();
+                myUser.setSelected(selected);
+                myUsers.add(myUser);
             } else {
-                users.add(new net.dirtydeeds.discordsoundboard.beans.User(discordUser.getId(), username, selected, discordUser.getJDA().getStatus()));
+                myUsers.add(new MyUser(discordUser.getId(), username, selected, discordUser.getJDA().getStatus()));
             }
         }
-        users.sort(Comparator.comparing(User::getUsername));
-        userService.saveAll(users);
-        return users;
+        myUsers.sort(Comparator.comparing(MyUser::getUsername));
+        userService.saveAll(myUsers);
+        return myUsers;
     }
 
     public net.dv8tion.jda.api.entities.User retrieveUserById(String id) {
@@ -288,7 +288,7 @@ public class SoundPlayer {
     public void updateFileList() {
         try {
             String soundFileDir = botConfig.getSoundFileDir();
-            if (StringUtils.isBlank(soundFileDir)) {
+            if (StringUtils.isEmpty(soundFileDir)) {
                 soundFileDir = System.getProperty("user.dir") + "/sounds";
             }
             LOG.info("Loading from " + soundFileDir);

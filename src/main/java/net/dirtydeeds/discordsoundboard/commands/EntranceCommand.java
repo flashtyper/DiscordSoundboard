@@ -1,8 +1,8 @@
 package net.dirtydeeds.discordsoundboard.commands;
 
 import net.dirtydeeds.discordsoundboard.SoundPlayer;
+import net.dirtydeeds.discordsoundboard.beans.MyUser;
 import net.dirtydeeds.discordsoundboard.beans.SoundFile;
-import net.dirtydeeds.discordsoundboard.beans.User;
 import net.dirtydeeds.discordsoundboard.service.SoundService;
 import net.dirtydeeds.discordsoundboard.service.UserService;
 
@@ -40,26 +40,26 @@ public class EntranceCommand extends Command {
             if (event.userIsAdmin() ||
                     (pmUser.getName().equalsIgnoreCase(userNameOrId)
                             || pmUser.getId().equals(userNameOrId))) {
-                User user = userService.findOneByIdOrUsernameIgnoreCase(userNameOrId, userNameOrId);
-                if (user == null) {
+                MyUser myUser = userService.findOneByIdOrUsernameIgnoreCase(userNameOrId, userNameOrId);
+                if (myUser == null) {
                     net.dv8tion.jda.api.entities.User jdaUser = soundPlayer.retrieveUserById(userNameOrId);
                     if (jdaUser != null) {
-                        user = new User(jdaUser.getId(), jdaUser.getName(), false, jdaUser.getJDA().getStatus());
+                        myUser = new MyUser(jdaUser.getId(), jdaUser.getName(), false, jdaUser.getJDA().getStatus());
                     }
                 }
-                if (user != null) {
+                if (myUser != null) {
                     if (soundFileName.isEmpty()) {
-                        user.setEntranceSound(null);
+                        myUser.setEntranceSound(null);
                         event.replyByPrivateMessage("User: " + userNameOrId + " entrance sound cleared");
-                        userService.save(user);
+                        userService.save(myUser);
                     } else {
                         SoundFile soundFile = soundService.findOneBySoundFileIdIgnoreCase(soundFileName);
                         if (soundFile == null) {
                             event.replyByPrivateMessage("Could not find sound file: " + soundFileName);
                         } else {
-                            user.setEntranceSound(soundFileName);
+                            myUser.setEntranceSound(soundFileName);
                             event.replyByPrivateMessage("User: " + userNameOrId + " entrance sound set to: " + soundFileName);
-                            userService.save(user);
+                            userService.save(myUser);
                         }
                     }
                 } else {
